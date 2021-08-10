@@ -50,8 +50,8 @@ module Fastlane
       end
 
       private_class_method def self.download_asset(asset_url, destination_path, api_token)
-        request_url = "#{asset_url}?access_token=#{api_token}"
-        send_download_request(request_url, "fastlane-plugin_download_github_release_asset", "application/octet-stream", destination_path)
+        request_url = "#{asset_url}"
+        send_download_request(request_url, "fastlane-plugin_download_github_release_asset", "application/octet-stream", destination_path, api_token)
         compressed_file_size = File.size(destination_path).to_f / 2**20
         formatted_file_size = format('%.2f', compressed_file_size)
         UI.success("Download finished, total size: #{formatted_file_size} MB ✅")
@@ -59,13 +59,13 @@ module Fastlane
         UI.user_error!("Error fetching release's asset: #{ex}")
       end
 
-      private_class_method def self.send_download_request(request_url, user_agent, accept, destination_path)
+      private_class_method def self.send_download_request(request_url, user_agent, accept, destination_path, api_token)
         step = 0
         partial = 0
         progress = 0
         File.open(destination_path, "wb") do |saved_file|
           # the following "open" is provided by open-uri
-          open(request_url, "User-Agent" => user_agent, "Accept" => accept, :content_length_proc => lambda do |t|
+          open(request_url, "User-Agent" => user_agent, "Accept" => accept, "Authorization" => "token #{api_token}",  :content_length_proc => lambda do |t|
             if t && 0 < t
               step = t / 10
               partial = step
